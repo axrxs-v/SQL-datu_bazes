@@ -1,0 +1,254 @@
+CREATE TYPE Personas_tips AS OBJECT (
+    Personas_id NUMBER,
+    Name VARCHAR2(50),
+    Age NUMBER
+);
+
+CREATE TABLE Personas_tabula OF Personas_tips (
+    CONSTRAINT pk_persona PRIMARY KEY (Personas_id)
+);
+
+INSERT INTO Personas_tabula VALUES (Personas_tips(1, 'Anna', 20));
+INSERT INTO Personas_tabula VALUES (Personas_tips(2, 'Kaspars', 32));
+INSERT INTO Personas_tabula VALUES (Personas_tips(3, 'Janis', 25));
+INSERT INTO Personas_tabula VALUES (Personas_tips(4, 'Juris', 24));
+INSERT INTO Personas_tabula VALUES (Personas_tips(5, 'Jana', 26));
+
+SELECT * FROM USER_TAB_COLUMNS WHERE TABLE_NAME = 'PERSONAS_TABULA';
+
+SELECT VALUE(p) FROM Personas_tabula p;
+SELECT p.Personas_id, p.Name, p.Age FROM Personas_tabula p;
+-------------------------------------------------------------------------------2
+CREATE TYPE Adreses_tips AS OBJECT (
+    Street VARCHAR2(50),
+    City VARCHAR2(50));
+
+CREATE TABLE Darbinieka_tabula (
+    Darbinieka_id NUMBER PRIMARY KEY,
+    Personas_id NUMBER REFERENCES Personas_tabula(Personas_id),
+    Address Adreses_tips);
+
+INSERT INTO Darbinieka_tabula VALUES (1, 1, Adreses_tips('Labenieks', 'Jurmala'));
+INSERT INTO Darbinieka_tabula VALUES (2, 2, Adreses_tips('Cavenieks', 'Gulbene'));
+INSERT INTO Darbinieka_tabula VALUES (3, 3, Adreses_tips('Vasarnieks', 'Kuldiga'));
+INSERT INTO Darbinieka_tabula VALUES (4, 4, Adreses_tips('Zieminieks', 'Liepaja'));
+INSERT INTO Darbinieka_tabula VALUES (5, 5, Adreses_tips('Desmitnieks', 'Riga'));
+
+SELECT * FROM USER_TAB_COLUMNS WHERE TABLE_NAME = 'DARBINIEKA_TABULA';
+
+SELECT e.Darbinieka_id, e.Personas_id, e.Address.Street, e.Address.City FROM Darbinieka_tabula e;
+-------------------------------------------------------------------------------3
+CREATE TYPE Telefona_saraksts AS TABLE OF VARCHAR2(16);
+
+CREATE TABLE Kontaktu_tabula (
+    Kontakta_id NUMBER PRIMARY KEY,
+    Personas_id NUMBER REFERENCES Personas_tabula(Personas_id),
+    Telefons Telefona_saraksts) 
+NESTED TABLE Telefons STORE AS Telefons_nested;
+
+INSERT INTO Kontaktu_tabula VALUES (1, 1,Telefona_saraksts('12345678', '98765466'));
+INSERT INTO Kontaktu_tabula VALUES (2, 2,Telefona_saraksts('23456789', '87654366'));
+INSERT INTO Kontaktu_tabula VALUES (3, 3,Telefona_saraksts('34567891', '76543266'));
+INSERT INTO Kontaktu_tabula VALUES (4, 4,Telefona_saraksts('45687912', '65432166'));
+INSERT INTO Kontaktu_tabula VALUES (5, 5,Telefona_saraksts('56789123', '54321966'));
+
+SELECT * FROM USER_TAB_COLUMNS WHERE TABLE_NAME = 'KONTAKTU_TABULA';
+
+SELECT k.Kontakta_id, k.Personas_id, p.COLUMN_VALUE AS Telefons
+FROM Kontaktu_tabula k, TABLE(k.Telefons) p;
+-------------------------------------------------------------------------------4======
+CREATE TYPE Automasinas_tips AS OBJECT (
+    Marka VARCHAR2(50),
+    Modelis VARCHAR2(50)
+) NOT FINAL;
+
+CREATE TYPE Auto_tips UNDER Automasinas_tips (
+    Durvju_skaits NUMBER(2));
+
+CREATE TYPE Velo_tips UNDER Automasinas_tips (
+    Vai_ieklauti_pedali CHAR(3));
+--------------------------------------------------------5
+CREATE TABLE Automasinu_tabula OF Automasinas_tips (
+    CONSTRAINT pk_automasinas PRIMARY KEY (Marka, Modelis));
+
+INSERT INTO Automasinu_tabula VALUES (Auto_tips('Toyota', 'Supra', 2));
+INSERT INTO Automasinu_tabula VALUES (Velo_tips('Canyon', 'Aero', 'Yes'));
+INSERT INTO Automasinu_tabula VALUES (Auto_tips('Nisan', 'Skyline', 2));
+INSERT INTO Automasinu_tabula VALUES (Velo_tips('Trek', 'Madona', 'Yes'));
+INSERT INTO Automasinu_tabula VALUES (Auto_tips('BMW', 'Mpaka', 4));
+INSERT INTO Automasinu_tabula VALUES (Velo_tips('Canondale', 'Evo', 'No'));
+
+CREATE VIEW Automasinu_skats AS
+SELECT 
+    v.Marka AS Marka,
+    v.Modelis AS Modelis
+FROM Automasinu_tabula v;
+
+SELECT * FROM Automasinu_skats;
+SELECT Marka, Modelis FROM Automasinu_skats;
+--------------------------------------------------------6 heterogēni !!!!!!!!!!!!!
+CREATE TABLE Jaukta_automasinu_tabula OF Automasinas_tips (
+    CONSTRAINT pk_jauktas_automasinas PRIMARY KEY (Marka, Modelis));
+
+INSERT INTO Jaukta_automasinu_tabula VALUES (Auto_tips('Volvo', 'sport', 4));
+INSERT INTO Jaukta_automasinu_tabula VALUES (Auto_tips('Honda', 'CivicR', 4));
+INSERT INTO Jaukta_automasinu_tabula VALUES (Velo_tips('Trek', 'Emonda', 'No'));
+INSERT INTO Jaukta_automasinu_tabula VALUES (Velo_tips('Giant', 'Ofroad', 'Yes'));
+
+SELECT * FROM Jaukta_automasinu_tabula;
+
+SELECT VALUE(a) FROM Jaukta_automasinu_tabula a;
+
+--------------------------------------------------------
+-- Izdzēš skatu, ja tāds eksistē
+DROP VIEW Automasinu_skats;
+
+-- Izdzēš tabulu, ja tāda eksistē
+DROP TABLE Jaukta_automasinu_tabula;
+DROP TABLE Automasinu_tabula;
+
+-- Izdzēš objektu tipus, ja tādi eksistē
+DROP TYPE Velo_tips;
+DROP TYPE Auto_tips;
+DROP TYPE Automasinas_tips;
+------------------------------------------------
+-- Izveido objektu tipu
+CREATE TYPE Automasinas_tips AS OBJECT (
+    Marka VARCHAR2(50),
+    Modelis VARCHAR2(50)
+) NOT FINAL;
+
+CREATE TYPE Auto_tips UNDER Automasinas_tips (
+    Durvju_skaits NUMBER(2)
+);
+
+CREATE TYPE Velo_tips UNDER Automasinas_tips (
+    Vai_ieklauti_pedali CHAR(3)
+);
+
+-- Izveido tabulu automašīnām
+CREATE TABLE Automasinu_tabula OF Automasinas_tips (
+    CONSTRAINT pk_automasinas PRIMARY KEY (Marka, Modelis)
+);
+
+-- Ievada datus automašīnu tabulā
+INSERT INTO Automasinu_tabula VALUES (Auto_tips('Toyota', 'Supra', 2));
+INSERT INTO Automasinu_tabula VALUES (Velo_tips('Canyon', 'Aero', 'Yes'));
+INSERT INTO Automasinu_tabula VALUES (Auto_tips('Nisan', 'Skyline', 2));
+INSERT INTO Automasinu_tabula VALUES (Velo_tips('Trek', 'Madona', 'Yes'));
+INSERT INTO Automasinu_tabula VALUES (Auto_tips('BMW', 'Mpaka', 4));
+INSERT INTO Automasinu_tabula VALUES (Velo_tips('Canondale', 'Evo', 'No'));
+
+-- Izveido skatu
+CREATE VIEW Automasinu_skats AS
+SELECT 
+    v.Marka AS Marka,
+    v.Modelis AS Modelis
+FROM Automasinu_tabula v;
+
+-- Izgūst datus no skata
+SELECT * FROM Automasinu_skats;
+SELECT Marka, Modelis FROM Automasinu_skats;
+
+-- Izveido tabulu ar heterogēniem objektiem
+CREATE TABLE Jaukta_automasinu_tabula OF Automasinas_tips (
+    CONSTRAINT pk_jauktas_automasinas PRIMARY KEY (Marka, Modelis)
+);
+
+-- Ievada datus hibrīdajā tabulā
+INSERT INTO Jaukta_automasinu_tabula VALUES (Auto_tips('Volvo', 'sport', 4));
+INSERT INTO Jaukta_automasinu_tabula VALUES (Auto_tips('Honda', 'CivicR', 4));
+INSERT INTO Jaukta_automasinu_tabula VALUES (Velo_tips('Trek', 'Emonda', 'No'));
+INSERT INTO Jaukta_automasinu_tabula VALUES (Velo_tips('Giant', 'Ofroad', 'Yes'));
+
+-- Izgūst datus no hibrīdās tabulas
+SELECT * FROM Jaukta_automasinu_tabula;
+
+-- Izgūst vērtības no hibrīdās tabulas
+SELECT VALUE(a) FROM Jaukta_automasinu_tabula a;
+
+SELECT 
+    a.Marka, 
+    a.Modelis, 
+    CAST(a AS Auto_tips).Durvju_skaits
+FROM Jaukta_automasinu_tabula a
+WHERE a IS OF Auto_tips;
+
+---------------------7uzd
+SELECT 
+    CASE 
+        WHEN Telefona_saraksts('12345678', '98765466') SUBMULTISET OF (SELECT t.Telefons FROM Kontaktu_tabula t WHERE t.Personas_id = 1) 
+        THEN 'True' 
+        ELSE 'False' 
+    END AS Is_Submultiset
+FROM dual;
+
+SELECT 
+    k.Kontakta_id, 
+    CARDINALITY(k.Telefons) AS Phone_Count
+FROM Kontaktu_tabula k;
+----------------------------------------------------------------8uzd
+CREATE TYPE Iestades_tips AS OBJECT (
+    Iestades_id NUMBER,
+    Iestades_nosaukums VARCHAR2(50));
+    
+CREATE TABLE Iestades_tabula OF Iestades_tips (
+    CONSTRAINT pk_iestades PRIMARY KEY (Iestades_id));
+INSERT INTO Iestades_tabula VALUES (Iestades_tips(1, 'IT'));
+INSERT INTO Iestades_tabula VALUES (Iestades_tips(2, 'Finansu'));
+INSERT INTO Iestades_tabula VALUES (Iestades_tips(3, 'Medicinas'));
+
+CREATE TABLE Apkalpe (
+    Apkalpe_id NUMBER PRIMARY KEY,
+    Vards VARCHAR2(50),
+    Iestades_ref REF Iestades_tips SCOPE IS Iestades_tabula);
+
+DECLARE
+    Iestades_ref_IT REF Iestades_tips;
+    Iestades_ref_Finansu REF Iestades_tips;
+    Iestades_ref_Medicinas REF Iestades_tips;
+BEGIN
+    SELECT REF(i) INTO Iestades_ref_IT FROM Iestades_tabula i WHERE i.Iestades_id = 1;
+    SELECT REF(i) INTO Iestades_ref_Finansu FROM Iestades_tabula i WHERE i.Iestades_id = 2;
+    SELECT REF(i) INTO Iestades_ref_Medicinas FROM Iestades_tabula i WHERE i.Iestades_id = 3;
+
+    INSERT INTO Apkalpe VALUES (1, 'Aspazija', Iestades_ref_IT);
+    INSERT INTO Apkalpe VALUES (2, 'Krauklis', Iestades_ref_Finansu);
+    INSERT INTO Apkalpe VALUES (3, 'Jorens', Iestades_ref_Medicinas);
+    INSERT INTO Apkalpe VALUES (4, 'Karlis', Iestades_ref_IT);
+END;
+
+SELECT i.Apkalpe_id, i.Vards, DEREF(i.Iestades_ref) AS Iestades
+FROM Apkalpe i;
+
+SELECT 
+    i.Apkalpe_id, 
+    i.Vards, 
+    DEREF(i.Iestades_ref).Iestades_nosaukums AS Iesatdes_nos
+FROM Apkalpe i;
+
+SELECT 
+    i.Apkalpe_id, 
+    i.Vards, 
+    DEREF(i.Iestades_ref).Iestades_nosaukums AS Iesatdes_nos
+FROM Apkalpe i
+WHERE DEREF(i.Iestades_ref).Iestades_nosaukums = 'IT';
+
+
+DROP VIEW Automasinu_skats;
+
+DROP TABLE Apkalpe;
+DROP TABLE Iestades_tabula;
+DROP TABLE Kontaktu_tabula;
+DROP TABLE Darbinieka_tabula;
+DROP TABLE Personas_tabula;
+DROP TABLE Jaukta_automasinu_tabula;
+DROP TABLE Automasinu_tabula;
+
+DROP TYPE Telefona_saraksts;
+DROP TYPE Adreses_tips;
+DROP TYPE Personas_tips;
+DROP TYPE Velo_tips;
+DROP TYPE Auto_tips;
+DROP TYPE Automasinas_tips;
+DROP TYPE Iestades_tips;
